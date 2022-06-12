@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>MusciPlayer</title>
+	<!-- 导入样式 -->
+	<link rel="stylesheet" href="file:///android_asset/css/elemenui.css" />
+	<link rel="stylesheet" href="./css/elemenui.css" />
+	<!-- 导入axios组件 -->
+	<script src="file:///android_asset/js/axios.min.js"></script>
+	<script src="./js/axios.min.js"></script>
+	<!-- 导入 Vue 3 -->
+	<script src="file:///android_asset/js/vue.js"></script>
+	<script src="./js/vue.js"></script>
+	<!-- 导入组件库 -->
+	<script src="file:///android_asset/js/elementui.js"></script>
+	<script src="./js/elementui.js"></script>
+	<!-- 安卓 -->
+	<link href="file:///android_asset/css/index.css" rel="stylesheet" />
+	<!-- 本地 -->
+	<link href="./css/index.css" rel="stylesheet" />
+
+	<meta name="referrer" content="no-referrer" />
+	<meta name="viewport"
+		content="width=device-width,height=device-height,inital-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+	<!-- <link rel="shortcut icon" href="./img/favicon.ico" type="image/x-icon" /> -->
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+
+		html,
+		body {
+			height: 100%;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="app">
+		<div class="container">
+			<el-drawer title="播放列表" v-model="showDrawer" direction="btt" :size="600">
+				<ul class="infinite-list" style="overflow: auto">
+					<li v-for="(music,index) in musicList" @click.stop="playWhich(index)"
+						:class="{playing:isRunning===index}" :key="index" class="infinite-list-item"
+						v-text="music.name.split(':')[1]"></li>
+				</ul>
+			</el-drawer>
+			<div class="header-bg"></div>
+			<el-container>
+				<el-header>
+					<div class="music_desc">
+						<div class="music_name">
+							<span v-text="music.name"></span>
+						</div>
+						<div class="music_author">
+							<span v-text="music.author"></span>
+						</div>
+						<span class="share iconfont" @click="share">&#xf1ec;</span>
+					</div>
+
+				</el-header>
+				<el-main>
+					<div class="main_container" @click.stop="showLyric=!showLyric">
+						<div class="music_cover" ref="music_cover" style="animation-play-state:paused"
+							:style="{animationPlayState:music.playing?'running':'paused',display:showLyric?'none':'block'}">
+							<canvas id="canvas" style="display: none;"></canvas>
+							<img id="cover" :src="music.cover" onload="setBackground()" :alt="music.name">
+						</div>
+						<div class="music_lyric" :style="{display:!showLyric?'none':'block'}">
+							<div class="lyric_container">
+								<ul class="lyric">
+									<li v-for="(item,index) in music.lyric" :key="index" @click.stop="lyricClick(index)"
+										:class="{active:index===lyricIndex}">
+										<span v-text="item.lyric"></span>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</el-main>
+				<el-footer :height="'120'">
+					<div class="bar">
+						<div class="time">
+							<span id="leftTime" v-text="getDuration(music.current)"></span>
+							<span id="rightTime" v-text="getDuration(music.total)"></span>
+						</div>
+						<el-slider ref="slider" v-model="music.current" :show-tooltip="false" @input="setCurrentTime"
+							:max="music.total" />
+					</div>
+					<div class="music_control">
+						<div class="play_mode">
+							<span class="iconfont" @click.stop="switchMode" v-html="playmodeText"></span>
+						</div>
+						<div class="prev">
+							<span class="iconfont" onclick="prev()">&#xf1ef;</span>
+						</div>
+						<div class="play_btn">
+							<span class="iconfont" @click.stop="play" ref="playBtn">&#xf1e6;</span>
+						</div>
+						<div class="next">
+							<span class="iconfont" onclick="next()">&#xf1f0;</span>
+						</div>
+						<div class="music_list">
+							<span class="iconfont" @click.stop="showMusicList">&#xf1eb;</span>
+						</div>
+					</div>
+				</el-footer>
+			</el-container>
+		</div>
+	</div>
+</body>
+<script>
+	const Counter = {
+		data() {
+			return {
+				lyricReady: false,
+				lyricIndex: 0,
+				showLyric: false,
+				isFirst: true,
+				showDrawer: false,
+				isRunning: 0,
+				playMode: 0,
+				playmodeText: '&#xf1fa;',
+				music: {
+					id: 33894312,
+					name: '',
+					author: '',
+					cover: 'file:///android_asset/img/Rc.png',
+					playing: false,
+					total: 100,
+					current: 0,
+					lyric: []
+				},
+				musicList: []
+			}
+		},
+		created() {
+			window.playMusic = this.play
+			window.setVueMusic = this.setVueMusic
+			window.setVueTime = this.setVueTime
+			window.setMusicList = this.setMusicList
+		},
+		methods: {
+			share() {
+				javascript: control.share(this.isRunning, this.music.name, this.music.author)
+			},
+			getLyric() {
+				try {
+					try {
+						document.querySelector('.lyric_container ul.lyric li:first-of-type').scrollIntoView({
+								behavior: 'smooth',
+								block: "top"
+							});
+					} catch (error) {
+						
+					}
+					// 清空lyric
+					this.music.lyric = []
+					this.$axios.get(`http://cloud-music.pl-fe.cn/lyric?id=${this.music.id}`).then(res => {
+						var l_list = res.data.lrc.lyric.split('\n')
+						for (var i = 0; i < l_list.length; i++) {
+							let l = l_list[i]
+							let time = l.split(']')[0].slice(1)
+							let ly = ''
+							try {
+								ly = l.split(']')[1]
+							} catch (error) {
+								ly = ''
+							}
+							this.music.lyric.push({
+								time: time,
+								lyric: ly
+							})
+						}
+						this.lyricReady = true
+					})
+				} catch (error) {
+					this.$message({
+						type: 'error',
+						duration: 3000,
+						content: '歌词加载失败'
+					});
+				}
+			},
+			lyricClick(index) {
+				function toSec(time) {
+					let arr = time.split(':')
+					let sec = 0
+					for (let i = 0; i < arr.length; i++) {
+						sec += arr[i] * Math.pow(60, arr.length - i - 1)
+					}
+					return sec
+				}
+				this.lyricIndex = index
+				let time = toSec(this.music.lyric[index].time) * 1000
+				this.setCurrentTime(time)
+			},
+			playWhich(index) {
+				this.music.playing = false
+				this.music.current = 0
+				javascript: control.playWhich(index)
+				this.showDrawer = false
+			},
+			setMusicList(list) {
+				this.musicList = typeof list == 'string' ? JSON.parse(list) : list
+			},
+			play() {
+				this.music.playing = !this.music.playing;
+				javascript: control.pauseAndPlay()
+			},
+			setCurrentTime(val) {
+				javascript: control.setCurrentTime(val)
+			},
+			switchMode() {
+				this.playMode = (this.playMode + 1) % 3;
+			},
+			setVueMusic(id, index, name, author, cover) {
+				this.music.current = 0;
+				this.music.total = 0
+				this.showLyric = false
+				this.lyricReady = false
+				this.lyricIndex = 0
+				this.music.id = id
+				this.getLyric()
+				this.music.name = name
+				this.music.author = author
+				this.music.cover = cover + '?timestamp=' + new Date().getTime()
+				this.music.current = 0
+				if (this.isFirst) {
+					this.isFirst = false
+					this.music.playing = false
+					return
+				}
+				this.music.playing = true
+				// 获得musicList中name为name的那一项的索引
+				this.isRunning = index
+			},
+			setVueTime(nowPlay, total) {
+				this.music.total = total
+				this.music.current = nowPlay
+				// 将current转换为秒
+				let current = this.music.current / 1000
+
+				if (this.lyricReady) {
+					function toSec(time) {
+						let arr = time.split(':')
+						let sec = 0
+						for (let i = 0; i < arr.length; i++) {
+							sec += arr[i] * Math.pow(60, arr.length - i - 1)
+						}
+						return sec
+					}
+					// 找到对应时间的歌词的索引
+					let index = this.music.lyric.findIndex(item => {
+						return toSec(item.time) >= current
+					})
+
+					try {
+						let s_index = 0
+						// 如果找到了歌词
+						if (index != -1) {
+							s_index = index - 1
+						} else {
+							s_index = this.music.lyric.length
+						}
+						if (s_index == this.lyricIndex) {
+							return
+						} else {
+							this.lyricIndex = s_index
+							document.querySelector('.lyric_container ul.lyric li.active').scrollIntoView({
+								behavior: 'smooth',
+								block: "center"
+							});
+						}
+
+					} catch (error) {
+
+					}
+				}
+
+			},
+			showMusicList() {
+				if (this.musicList.length == 0) {
+					var list = window.control.getMusicList()
+					this.musicList = typeof list == 'string' ? JSON.parse(list) : list
+				}
+				this.$nextTick(() => {
+					this.showDrawer = !this.showDrawer
+				})
+			},
+			getDuration(my_time) {
+				var days = my_time / 1000 / 60 / 60 / 24;
+				var daysRound = Math.floor(days);
+				if (daysRound.toString() === 'NaN') {
+					daysRound = 0
+				}
+				var hours = my_time / 1000 / 60 / 60 - (24 * daysRound);
+				var hoursRound = Math.floor(hours);
+				if (hoursRound.toString() === 'NaN') {
+					hoursRound = 0
+				}
+				var minutes = my_time / 1000 / 60 - (24 * 60 * daysRound) - (60 * hoursRound);
+				var minutesRound = Math.floor(minutes);
+				if (minutesRound.toString() === 'NaN') {
+					minutesRound = 0
+				}
+				var seconds = my_time / 1000 - (24 * 60 * 60 * daysRound) - (60 * 60 * hoursRound) - (60 * minutesRound);
+				var secondsRound = Math.floor(seconds);
+				if (secondsRound.toString() === 'NaN') {
+					secondsRound = 0
+				}
+				if (hoursRound === 0) {
+					var time = minutesRound.toString().padStart(2, '0') + ':' + secondsRound.toString().padStart(2, '0');
+					return time;
+				} else {
+					var time = hoursRound.toString().padStart('2', 0) + ":" + minutesRound.toString().padStart(2, '0') + ':' + secondsRound.toString().padStart(2, '0');
+					return time;
+				}
+			}
+		},
+		watch: {
+			playMode(newVal, oldVal) {
+				// 0 列表循环
+				// 1 单曲循环
+				// 2 随机播放
+				switch (newVal) {
+					case 0: {
+						this.playmodeText = '&#xf1fa;';
+						break;
+					}
+					case 1: {
+						this.playmodeText = '&#xf1f9;';
+						break;
+					}
+					case 2: {
+						this.playmodeText = '&#xf1f8;';
+						break;
+					}
+				}
+				setPlayMode(newVal)
+			},
+			'music.playing': {
+				handler: function (newVal, oldVal) {
+					if (newVal) {
+						this.$refs.music_cover.style['animationPlayState'] = 'running';
+						this.$refs.playBtn.innerHTML = '&#xf1f2;'
+					} else {
+						this.$refs.music_cover.style['animationPlayState'] = 'paused';
+						this.$refs.playBtn.innerHTML = '&#xf1e6;'
+					}
+				},
+				immediate: false
+			}
+		}
+	}
+	var app = Vue.createApp(Counter)
+	app.use(ElementPlus)
+	app.config.errorHandler = function (err, vm, info) {
+		console.log(err, vm, info)
+	};
+
+	app.config.globalProperties.$axios = axios;
+	app.mount('#app')
+
+	function setPlayMode(mode) {
+		javascript: control.setPlayMode(mode)
+	}
+
+	function prev() {
+		javascript: control.prev()
+	}
+
+	function next() {
+		javascript: control.next()
+	}
+
+	function getImageColor(canvas, img) {
+		img.crossOrigin = "Anonymous";
+		canvas.width = img.width;
+		canvas.height = img.height;
+		var context = canvas.getContext("2d");
+		context.drawImage(img, 0, 0, canvas.width, canvas.height);
+		// 获取像素数据
+		var data = context.getImageData(0, 0, img.width, img.height).data;
+		var r = 1, g = 1, b = 1;
+		// 取所有像素的平均值
+		for (var row = 0; row < img.height; row++) {
+			for (var col = 0; col < img.width; col++) {
+				if (row == 0) {
+					r += data[((img.width * row) + col)];
+					g += data[((img.width * row) + col) + 1];
+					b += data[((img.width * row) + col) + 2];
+				} else {
+					r += data[((img.width * row) + col) * 4];
+					g += data[((img.width * row) + col) * 4 + 1];
+					b += data[((img.width * row) + col) * 4 + 2];
+				}
+			}
+		}
+
+		// 求取平均值
+		r /= (img.width * img.height);
+		g /= (img.width * img.height);
+		b /= (img.width * img.height);
+
+		// 将最终的值取整
+		r = Math.round(r);
+		g = Math.round(g);
+		b = Math.round(b);
+		// document.getElementsByClassName("lyric_container")[0].style.color = 'rgb(' + (255-r) + ',' + (255-g) + ',' + (255-b) + ')';
+		return "rgb(" + r + "," + g + "," + b + ")";
+	}
+	function setBackground() {
+		var canvas = document.getElementById('canvas');
+		var img = document.getElementById('cover');
+		var container = document.getElementsByClassName('container')[0];
+		var color = getImageColor(canvas, img);
+		container.style.backgroundImage = `linear-gradient(to bottom right,${color},white)`;
+	}
+</script>
+
+</html>
