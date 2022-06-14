@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
         android:allowBackup="true"
@@ -16,6 +20,15 @@
         android:theme="@style/Theme.MusicPlayer"
         android:usesCleartextTraffic="true"
         tools:targetApi="m">
+        <provider
+            android:authorities="com.example.musicplayer.fileprovider"
+            android:name="androidx.core.content.FileProvider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths"/>
+        </provider>
         <activity
             android:name=".SplashActivity"
             android:configChanges="uiMode"
@@ -28,7 +41,6 @@
         </activity>
 
         <service android:name=".Service.MusicService" />
-
         <activity
             android:name=".MainActivity"
             android:configChanges="uiMode"

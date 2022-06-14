@@ -5,6 +5,7 @@ import android.util.Log;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.ejlchina.okhttps.HTTP;
 import com.example.musicplayer.Entity.Music;
 
 import java.io.BufferedReader;
@@ -19,8 +20,13 @@ public class MusicHelper {
 
     public List<Music> getMusicList() {
         List<Music> ret = new ArrayList<>();
-        String url = "http://cloud-music.pl-fe.cn/top/song?type=7";
-        String doc = sendGet(url);
+        HTTP http = HTTP.builder()
+                .baseUrl("http://cloud-music.pl-fe.cn/top")
+                .build();
+        String doc = http.sync("/song?type=7")
+                .get()
+                .getBody()
+                .toString();
         JSONObject jsonObject = JSON.parseObject(doc);
         JSONArray musicArray = jsonObject.getJSONArray("data");
         int i=1;
