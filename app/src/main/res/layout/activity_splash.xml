@@ -1,16 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/splash_root"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@drawable/start"
+    android:background="#F72D5C"
     android:orientation="vertical" >
 
     <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:id="@+id/logo"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_centerInParent="true"
         android:scaleType="centerCrop"
-        android:src="@drawable/start"
-        />
+        android:src="@drawable/ic_day1_ipod" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="25sp"
+        android:layout_below="@+id/logo"
+        android:layout_centerHorizontal="true"
+        android:textColor="#E0E5E9"
+        android:layout_marginTop="100dp"
+        android:fontFamily="@font/fztan"
+        android:text="@string/app_name"/>
 
-</LinearLayout>
+</RelativeLayout>

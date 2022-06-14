@@ -9,13 +9,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
-
 import androidx.annotation.Nullable;
-
 import com.alibaba.fastjson.JSON;
-import com.example.musicplayer.MainActivity;
+import com.example.musicplayer.Entity.Music;
 import com.example.musicplayer.Utils.MusicHelper;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
@@ -24,26 +21,27 @@ public class MusicService extends Service {
 
     private Integer nowPlaying = 0;
     public MediaPlayer mediaPlayer;
-    private boolean isPrepared = false;
+    private volatile boolean isPrepared = false;
     private Thread seekThread;
     private boolean isFirst = true;
     private Integer playMode = 0;
     private boolean isPaused = true;
+    private int now_list_index = 0;
     private Handler handler;
-    private List<MusicHelper.Music> musicList;
-    private MainActivity mainActivity;
+    public static List<Music> musicList;
+    public static List<Music> favMusicList;
     public MusicService(){
-        new Thread(() -> {
+        Thread getList = new Thread(() -> {
             musicList = new MusicHelper().getMusicList();
+            initPlayer();
             isPrepared = true;
-            String call = "javascript:setMusicList(" + JSON.toJSONString(musicList) + ")";
-            Message message = handler.obtainMessage();
-            message.what = 3;
-            message.obj = call;
-            handler.sendMessage(message);
-            setDefaultMusic();
-        }).start();
-        initPlayer();
+        });
+        getList.start();
+        try {
+            getList.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public Thread getSeekThread(){
@@ -56,7 +54,7 @@ public class MusicService extends Service {
                     msg.arg2 = mediaPlayer.getDuration();
                     handler.sendMessage(msg);
                     try {
-                        Thread.sleep(800);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -104,17 +102,19 @@ public class MusicService extends Service {
             }
         });
         mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-            Log.e("MY_TAG","Error");
+            Log.e("MusicService", "onError: " + what + " " + extra);
             return false;
         });
     }
 
-    public void selectPlay(int index){
-        if(index<0 || index>=musicList.size()){
+    public void selectPlay(int list_index,int index){
+        now_list_index = list_index;
+        List<Music> playList = list_index == 0 ? musicList : favMusicList;
+        if(index<0 || index>=playList.size()){
             next(0);
         } else {
             nowPlaying = index;
-            setMusic(nowPlaying);
+            setMusic(list_index,nowPlaying);
         }
     }
 
@@ -128,16 +128,17 @@ public class MusicService extends Service {
         }
     }
 
-    public void setMusic(Integer index){
+    public void setMusic(int list_index,Integer index){
+        List<Music> playList = list_index == 0 ? musicList : favMusicList;
         nowPlaying = index;
-        if(nowPlaying<0 || nowPlaying>=musicList.size()){
+        if(nowPlaying<0 || nowPlaying>=playList.size()){
             nowPlaying = 0;
         }
         if(mediaPlayer.isPlaying()){
             mediaPlayer.stop();
         }
         try {
-            MusicHelper.Music music = musicList.get(nowPlaying);
+            Music music = playList.get(nowPlaying);
             mediaPlayer.reset();
             mediaPlayer.setDataSource(music.url);
             mediaPlayer.prepareAsync();
@@ -153,21 +154,23 @@ public class MusicService extends Service {
     }
 
     public void prev(){
+        List<Music> playList = now_list_index == 0 ? musicList : favMusicList;
         if(nowPlaying == 0){
-            nowPlaying = musicList.size() - 1;
+            nowPlaying = playList.size() - 1;
         }
         else{
             nowPlaying--;
         }
-        setMusic(nowPlaying);
+        setMusic(now_list_index,nowPlaying);
     }
 
     public void next(int offset){
+        List<Music> playList = now_list_index == 0 ? musicList : favMusicList;
         if(offset!=0){
             int tmp = nowPlaying;
             nowPlaying += offset;
-            if(nowPlaying >= musicList.size()-1){
-                nowPlaying -= musicList.size();
+            if(nowPlaying >= playList.size()-1){
+                nowPlaying -= playList.size();
             }
             if(tmp==nowPlaying){
                 nowPlaying++;
@@ -176,21 +179,29 @@ public class MusicService extends Service {
         if(nowPlaying<0){
             nowPlaying = 0;
         }
-        if(nowPlaying >= musicList.size()){
+        if(nowPlaying >= playList.size()){
             nowPlaying = 0;
         }
         else{
             nowPlaying++;
         }
-        setMusic(nowPlaying);
+        setMusic(now_list_index,nowPlaying);
     }
 
     public void setHandler(Handler handler){
         this.handler = handler;
+        String json = JSON.toJSONString(musicList);
+        Log.e("MusicService", "setHandler: " + json);
+        String call = "javascript:setMusicList(" + json + ")";
+        Message message = handler.obtainMessage();
+        message.what = 3;
+        message.obj = call;
+        handler.sendMessage(message);
+        setDefaultMusic();
     }
 
     public void setDefaultMusic(){
-        MusicHelper.Music music = musicList.get(nowPlaying);
+        Music music = musicList.get(nowPlaying);
         try {
             mediaPlayer.setDataSource(music.url);
         } catch (IOException e) {
@@ -205,12 +216,8 @@ public class MusicService extends Service {
         handler.sendMessage(message);
     }
 
-    public List<MusicHelper.Music> getMusicList() {
+    public List<Music> getMusicList() {
         return musicList;
-    }
-
-    public void setActivity(MainActivity mainActivity) {
-        this.mainActivity = mainActivity;
     }
 
     public class LocalBinder extends Binder{

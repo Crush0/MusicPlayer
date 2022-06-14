@@ -3,7 +3,23 @@
 	height: calc(100%);
 }
 
+.bg{
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	display: flex;
+	top:0;
+	left:0;
+	align-items:center;
+	justify-self: center;
+	overflow: hidden;
+	filter: blur(100px);
+	z-index: -999;
+}
 
+.bg div{
+	transition: all .4s linear;
+}
 
 /* 容器 */
 .container {
@@ -12,8 +28,15 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	background-color: cornflowerblue;
-	filter: (2px)
+	
+}
+.music_name,.music_author{
+	text-align: center;
+	overflow: hidden;
+}
+.name {
+	display: inline-block;
+    white-space: nowrap;
 }
 
 .music_desc {
@@ -34,18 +57,81 @@
 	border-radius: 50%;
 	user-select: none;
 }
-
-.music_desc .music_author span {
-	color: rgb(66, 66, 66);
+.empty-list{
+	width: 100%;
+	height: 100%;
+	display: flex;
 }
 
+.empty-list span{
+	display: block;
+	margin: 0 auto;
+	user-select: none;
+	color: rgba(0, 0, 0, 0.6)
+}
+
+.fav{
+	display: block;
+	position: absolute;
+	left: 20px;
+	font-size: 25px !important;
+	cursor: pointer;
+	border-radius: 50%;
+	user-select: none;
+}
+
+.music_container{
+	width: 100%;
+	height: 397px;
+}
+
+.music_container::-webkit-scrollbar { width: 0 !important }
+.music_container { -ms-overflow-style: none; }
+.music_container { overflow: -moz-scrollbars-none; }
+
+.fav.active{
+	color: rgb(223, 56, 56);
+}
+
+.music_desc .music_author span {
+	color: rgb(0, 0, 0,0.6);
+}
+.music_name{
+	width: 150px;
+}
+.music_author{
+	width: 300px;
+}
+
+.name.scroll {
+    animation: 8s wordsLoop linear infinite;
+}
+@keyframes wordsLoop {
+
+    0% {
+
+        transform: translateX(100%);
+
+        -webkit-transform: translateX(100%);
+
+    }
+
+    100% {
+
+        transform: translateX(-100%);
+
+        -webkit-transform: translateX(-100%);
+
+    }
+
+}
 .header-bg {
 	position: absolute;
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 60px;
-	background-color: azure;
+	height: 90px;
+	background-color: rgb(144,150,150);
 	padding: 0 0 0 0 !important;
 	opacity: 0.3;
 }
@@ -59,13 +145,13 @@
 	align-items: center;
 	justify-content: center;
 }
-
 .music_lyric{
 	width: 320px;
 	height: 600px;
 	display: flex;
 	align-items: center;
 	position: relative;
+	transform: translateY(-40px);
 }
 
 .lyric_container{
@@ -77,7 +163,7 @@
 	align-items: center;
 	background: inherit;
 	position: relative;
-	color:#333;
+	color:rgba(0, 0, 0, 0.6);
 	margin: 0 auto;
 }
 
@@ -92,6 +178,16 @@
 	left: 0;
 } */
 
+p.no-lyric{
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 100%;
+	color: rgba(0, 0, 0, 0.6);
+}
+
 .lyric_container ul.lyric{
 	list-style: none;
 }
@@ -105,12 +201,25 @@
 	text-align: center;
 	user-select: none;
 	transition: font-size 0.3s ease,color 0.3s ease;
+	font-family: '演示秋鸿楷'!important;
 	
 }
 
+.footer-bg{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 120px;
+	z-index: -999;
+	background-color: rgb(144,150,150);
+	padding: 0 0 0 0 !important;
+	opacity: 0.3;
+}
+
 .lyric_container ul.lyric li.active span{
-	color: rgb(233, 233, 233);
-	font-size: 20px;
+	color: rgb(255, 255, 255);
+	font-size: 110%;
 }
 
 .lyric_container::-webkit-scrollbar { width: 0 !important }
@@ -150,6 +259,12 @@ a {
 	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
+.foot{
+	position: fixed;
+	bottom: 0;
+	transform: TRANSLATEX(25px);
+}
+
 .music_control div span {
 	font-size: 30px;
 	margin: auto 10px;
@@ -177,6 +292,15 @@ a {
 .play_btn span {
 	font-size: 50px !important;
 }
+
+.el-tabs{
+	height: 100%;
+	overflow: scroll;
+}
+
+.el-tabs::-webkit-scrollbar { width: 0 !important }
+.el-tabs { -ms-overflow-style: none; }
+.el-tabs { overflow: -moz-scrollbars-none; }
 
 .infinite-list {
 	height: 100%;
@@ -230,6 +354,11 @@ a {
 	src: url('../fonts/iconfont.woff2?t=1654911187666') format('woff2'),
 		url('../fonts/iconfont.woff?t=1654911187666') format('woff'),
 		url('../fonts/iconfont.ttf?t=1654911187666') format('truetype');
+}
+
+@font-face {
+	font-family: '演示秋鸿楷';
+	src: url('../fonts/YanShiQiuHongKai-2.ttf') format('truetype');
 }
 
 .iconfont {

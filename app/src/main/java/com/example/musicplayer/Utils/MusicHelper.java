@@ -5,6 +5,7 @@ import android.util.Log;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.example.musicplayer.Entity.Music;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -15,30 +16,10 @@ import java.util.List;
 
 public class MusicHelper {
 
-    public class Music{
-        public Integer id = 0;
-        public String name = "";
-        public String url = "";
-        public String article = "";
-        public String imageUrl = "";
-
-        @Override
-        public String toString() {
-            return "Music{" +
-                    "id=" + id +
-                    ", name='" + name + '\'' +
-                    ", url='" + url + '\'' +
-                    ", article='" + article + '\'' +
-                    ", imageUrl='" + imageUrl + '\'' +
-                    '}';
-        }
-    }
-
-    private final String url = "http://cloud-music.pl-fe.cn/top/song?type=7";
-    private final String newUrlPrefix = "https://link.hhtjim.com/163/";
 
     public List<Music> getMusicList() {
         List<Music> ret = new ArrayList<>();
+        String url = "http://cloud-music.pl-fe.cn/top/song?type=7";
         String doc = sendGet(url);
         JSONObject jsonObject = JSON.parseObject(doc);
         JSONArray musicArray = jsonObject.getJSONArray("data");
@@ -56,6 +37,7 @@ public class MusicHelper {
                 }
             }
             music.id = tmp.getInteger("id");
+            String newUrlPrefix = "https://link.hhtjim.com/163/";
             music.url = newUrlPrefix + tmp.getString("id") + ".mp3";
             music.imageUrl = tmp.getJSONObject("album").getString("blurPicUrl");
             music.name = (i++) +":"+ tmp.getString("name");

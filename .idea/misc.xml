@@ -3,8 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Code/AndroidStudioProjects/MusicPlayer/app/src/main/res/drawable/ic__10_sega_megdrive.xml" value="0.3125" />
+        <entry key="..\:/Code/AndroidStudioProjects/MusicPlayer/app/src/main/res/drawable/ic_day1_ipod.xml" value="0.3125" />
+        <entry key="..\:/Code/AndroidStudioProjects/MusicPlayer/app/src/main/res/drawable/ic_logo.xml" value="0.1955" />
         <entry key="..\:/Code/AndroidStudioProjects/MusicPlayer/app/src/main/res/layout/activity_main.xml" value="0.358695652173913" />
-        <entry key="..\:/Code/AndroidStudioProjects/MusicPlayer/app/src/main/res/layout/activity_splash.xml" value="0.1875" />
+        <entry key="..\:/Code/AndroidStudioProjects/MusicPlayer/app/src/main/res/layout/activity_splash.xml" value="0.33" />
       </map>
     </option>
   </component>
